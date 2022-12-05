@@ -1,5 +1,5 @@
 # File: AdvRoom.py
-# Name: your name
+# Name: Sergio Ley Languren
 
 """This module is responsible for modeling a single room in Adventure."""
 
@@ -10,12 +10,15 @@
 # Milestone #1.  You will need to add other public methods for later    #
 # milestones, as described in the handout.                              #
 #########################################################################
+from typing import Union
 
 # Constants
 
 MARKER = "-----"
 
 class AdvRoom:
+
+    visited = False
 
     def __init__(self, name, shortdesc, longdesc, passages):
         """Creates a new room with the specified attributes."""
@@ -40,15 +43,38 @@ class AdvRoom:
         """Returns the dictionary mapping directions to names."""
         return self._passages.copy()
 
-# Method to read a room from a file
+    def set_visited(self):
+        """
+        Sets the rooms visitation status
+        """
+        self.visited = True if not self.visited else False
 
-def read_room(f):
-    """Reads the next room from the file, returning None at the end."""
+    def has_been_visited(self) -> bool:
+        """
+        returns whether the room has been visited or not
+        """
+        return self.visited
+
+# Method to read a room from a file and helper functions
+
+def _parse_text(txt_obj: list) -> Union[str, str]:
+    """
+    Seperates text into short and long descriptions
+    """
+    short_desc = txt_obj.pop(0) # Short description is always first in the list
+
+    long_desc = "".join(txt_obj)
+    
+    return short_desc, long_desc
+
+
+def read_adventure(f):
+    """Reads adventure rooms from file, returning None at the end."""
     name = f.readline().rstrip()             # Read the room name
     if name == "":                           # Returning None at the end
         return None
 
-    text = [ ]                               # Read the rrom text
+    text = [ ]                               # Read the room text
     finished = False
     while not finished:
         line = f.readline().rstrip()
@@ -71,4 +97,13 @@ def read_room(f):
             next_room = line[colon + 1:].strip()
             answers[response] = next_room
 
-    return AdvRoom(name, text, answers)  # Return the completed object
+    short_desc, long_desc = _parse_text(text)
+
+    print("\n--------------------------")
+    print(f"NAME: {name}")
+    print(f"SHORT DESC: {short_desc}")
+    print(f"LONG DESC: {long_desc}")
+    print(f"ANSWERS: {answers}")
+    print("--------------------------\n")
+
+    return AdvRoom(name, short_desc, long_desc, answers)  # Return the completed object

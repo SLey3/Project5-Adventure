@@ -15,7 +15,7 @@ necessary to play a game.
 # into helper methods will be essential.                                  #
 ###########################################################################
 
-from AdvRoom import read_room
+from AdvRoom import read_adventure
 
 class AdvGame:
 
@@ -26,23 +26,47 @@ class AdvGame:
 
     def get_room(self, name):
         """Returns the AdvRoom object with the specified name."""
+        return self._room[name]
 
     def run(self):
         """Plays the adventure game stored in this object."""
         current = "START"
-        while current != "QUIT":
+        while current != "EXIT":
             room = self._room[current]
             for line in room.get_text():
                 print(line)
-            response = input("> ").strip().upper()
-            answers = room.get_answers()
-            next_room = answers.get(response, None)
-            if next_room is None:
-                next_room = answers.get("*", None)
-            if next_room is None:
-                print("I don't understand that response. Perhaps my english isn't that good...")
+            forced = answers.get("FORCED", None)
+
+            # "if not var" is another way to state "if var is None"
+            if not forced:
+                response = input("> ").strip().upper()
+                answers = room.get_answers()
+                next_room = answers.get(response, None)
+
+                if not next_room:
+                    next_room = answers.get("*", None)
+                if not next_room:
+                    print("I don't understand that response. Perhaps my english isn't that good...")
+                else:
+                    current = next_room
             else:
-                current = next_room
+                current = forced
+
+
+def read_game(f):
+    """Reads the entire Game from the data file f."""
+    rooms = { }
+    finished = False
+    while not finished:
+        room = read_adventure(f)
+        if room is None:
+            finished = True
+        else:
+            name = room.get_name()
+            if len(rooms) == 0:
+                rooms["START"] = room
+            rooms[name] = room
+    return AdvGame(rooms)
 
 # Constants
 
