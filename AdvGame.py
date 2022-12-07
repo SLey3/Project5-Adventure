@@ -15,14 +15,13 @@ necessary to play a game.
 # into helper methods will be essential.                                  #
 ###########################################################################
 
-from AdvRoom import read_adventure
+from AdvRoom import read_adventure, AdvRoom
+from typing import Type, Dict
 
 class AdvGame:
 
-    def __init__(self, prefix):
-        """Reads the game data from files with the specified prefix."""
-        self._prefix = prefix
-        self._room = {}
+    def __init__(self, room: Dict["str", Type[AdvRoom]]):
+        self._room = room
 
     def get_room(self, name):
         """Returns the AdvRoom object with the specified name."""
@@ -33,14 +32,17 @@ class AdvGame:
         current = "START"
         while current != "EXIT":
             room = self._room[current]
-            for line in room.get_text():
-                print(line)
+            
+            line = room.get_text()
+            print(line)
+
+            response = input("> ").strip().upper()
+            answers = room.get_passages()
+
             forced = answers.get("FORCED", None)
 
             # "if not var" is another way to state "if var is None"
             if not forced:
-                response = input("> ").strip().upper()
-                answers = room.get_answers()
                 next_room = answers.get(response, None)
 
                 if not next_room:
@@ -48,6 +50,7 @@ class AdvGame:
                 if not next_room:
                     print("I don't understand that response. Perhaps my english isn't that good...")
                 else:
+                    room.set_visited()
                     current = next_room
             else:
                 current = forced

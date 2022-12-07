@@ -10,7 +10,8 @@
 # Milestone #1.  You will need to add other public methods for later    #
 # milestones, as described in the handout.                              #
 #########################################################################
-from typing import Union
+from typing import Union, List
+from textwrap import fill
 
 # Constants
 
@@ -27,6 +28,13 @@ class AdvRoom:
         self._ldesc = longdesc
         self._passages = passages
 
+    @property
+    def has_been_visited(self) -> bool:
+        """
+        returns whether the room has been visited or not
+        """
+        return self.visited
+
     def get_name(self):
         """Returns the name of this room.."""
         return self._name
@@ -36,8 +44,16 @@ class AdvRoom:
         return self._sdesc
 
     def get_long_description(self):
-        """Returns the list of lines describing this room."""
+        """Returns the long description describing this room."""
         return self._ldesc
+
+    def get_text(self):
+        """
+        Gets the text describing the room depending on visited status
+        """
+        if self.has_been_visited:
+            return self.get_short_description()
+        return self.get_long_description()
 
     def get_passages(self):
         """Returns the dictionary mapping directions to names."""
@@ -47,23 +63,35 @@ class AdvRoom:
         """
         Sets the rooms visitation status
         """
-        self.visited = True if not self.visited else False
-
-    def has_been_visited(self) -> bool:
-        """
-        returns whether the room has been visited or not
-        """
-        return self.visited
+        self.visited = True
 
 # Method to read a room from a file and helper functions
 
-def _parse_text(txt_obj: list) -> Union[str, str]:
+def _parse_text(txt_obj: List[str]) -> Union[str, str]:
     """
     Seperates text into short and long descriptions
     """
     short_desc = txt_obj.pop(0) # Short description is always first in the list
 
-    long_desc = "".join(txt_obj)
+    long_desc = ""
+
+    print(txt_obj)
+
+    for txt in txt_obj:
+        if "." in txt:
+            txt = txt.replace(".", ".\n")
+
+            # if the end of the line is not the end of a sentence, a space must be added in order to prevent words unececessarily combining
+            if txt[-1] != ".\n":
+                txt_split = txt.rsplit(txt[-1], 1) # isolate the last character in the string from the rest of the string
+                txt_split[1] = txt_split[1].replace("", f"{txt[-1]} ") # adds the last character with space
+                txt = "".join(txt_split) # reform string
+           
+        else:
+            txt = txt.replace(txt[-1], f"{txt[-1]} ")
+        long_desc += txt
+    
+    long_desc = fill(long_desc) # make line indents even
     
     return short_desc, long_desc
 
@@ -99,11 +127,11 @@ def read_adventure(f):
 
     short_desc, long_desc = _parse_text(text)
 
-    print("\n--------------------------")
-    print(f"NAME: {name}")
-    print(f"SHORT DESC: {short_desc}")
-    print(f"LONG DESC: {long_desc}")
-    print(f"ANSWERS: {answers}")
-    print("--------------------------\n")
+    # print("\n--------------------------")
+    # print(f"NAME: {name}")
+    # print(f"SHORT DESC: {short_desc}")
+    # print(f"LONG DESC: {long_desc}")
+    # print(f"ANSWERS: {answers}")
+    # print("--------------------------\n")
 
     return AdvRoom(name, short_desc, long_desc, answers)  # Return the completed object
