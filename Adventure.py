@@ -1,5 +1,5 @@
 # File: Adventure.py
-# Name: your name
+# Name: Sergio Ley Languren
 
 """This file runs the Adventure game."""
 
@@ -13,30 +13,14 @@
 #    "Crowther"  The full 77-room Adventure game
 
 from AdvGame import read_game
-import os
-import os.path as path
+from fpfinder import get_file_fp
 
 # Constants
 
-DATA_FILE_PREFIX = "Tiny"
-
-# Main program
-
-def _get_file_fp(prefix):
-    # It's important to get the current working directory in order to get correct paths
-    cwd = os.getcwd()
-
-    # list thru all directories and files, checking only files and only checks the prefixes for files
-    # will return the filepath of the matching file
-    for item in os.listdir(cwd):
-        if path.isfile(path.join(cwd, item)):
-            if item.startswith(prefix) and item.endswith(".txt"):
-                return path.join(cwd, item)
+DATA_FILE_PREFIX = "CrowtherR"
 
 def adventure():
-    fp = _get_file_fp(DATA_FILE_PREFIX)
-
-    print(f"FP: {fp}")
+    fp = get_file_fp(DATA_FILE_PREFIX)
     
     with open(fp) as f:
         return read_game(f)

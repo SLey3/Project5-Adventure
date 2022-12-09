@@ -27,6 +27,7 @@ class AdvRoom:
         self._sdesc = shortdesc
         self._ldesc = longdesc
         self._passages = passages
+        self._objects = set()
 
     @property
     def has_been_visited(self) -> bool:
@@ -65,7 +66,33 @@ class AdvRoom:
         """
         self.visited = True
 
-# Method to read a room from a file and helper functions
+    def add_object(self, obj_name):
+        """
+        add object to the room
+        """
+        self._objects.add(obj_name)
+
+    def remove_object(self, obj_name):
+        """
+        removes object from the room
+        """
+        try:
+            self._objects.remove(obj_name)
+        except KeyError:
+            pass
+    
+    def contains_object(self, name):
+        """
+        Checks whether an object is in the room
+        """
+        return name in self._objects
+    
+    def get_contents(self):
+        """
+        copy objects set
+        """
+        return self._objects.copy()
+    
 
 def _parse_text(txt_obj: List[str]) -> Union[str, str]:
     """
@@ -75,13 +102,11 @@ def _parse_text(txt_obj: List[str]) -> Union[str, str]:
 
     long_desc = ""
 
-    print(txt_obj)
-
     for txt in txt_obj:
         if "." in txt:
             txt = txt.replace(".", ".\n")
 
-            # if the end of the line is not the end of a sentence, a space must be added in order to prevent words unececessarily combining
+            # if the end of the index item is not the end of a sentence, a space must be added in order to prevent words unecessarly combining
             if txt[-1] != ".\n":
                 txt_split = txt.rsplit(txt[-1], 1) # isolate the last character in the string from the rest of the string
                 txt_split[1] = txt_split[1].replace("", f"{txt[-1]} ") # adds the last character with space
@@ -95,6 +120,8 @@ def _parse_text(txt_obj: List[str]) -> Union[str, str]:
     
     return short_desc, long_desc
 
+
+# Method to read a room from a file
 
 def read_adventure(f):
     """Reads adventure rooms from file, returning None at the end."""
@@ -111,7 +138,7 @@ def read_adventure(f):
         else:
             text.append(line)
 
-    answers = { }                            # Read the answer dictionary
+    passages= { }                            # Read the answer dictionary
     finished = False
     while not finished:
         line = f.readline().rstrip()
@@ -123,15 +150,8 @@ def read_adventure(f):
                 raise ValueError("Missing colon in " + line)
             response = line[:colon].strip().upper()
             next_room = line[colon + 1:].strip()
-            answers[response] = next_room
+            passages[response] = next_room
 
     short_desc, long_desc = _parse_text(text)
 
-    # print("\n--------------------------")
-    # print(f"NAME: {name}")
-    # print(f"SHORT DESC: {short_desc}")
-    # print(f"LONG DESC: {long_desc}")
-    # print(f"ANSWERS: {answers}")
-    # print("--------------------------\n")
-
-    return AdvRoom(name, short_desc, long_desc, answers)  # Return the completed object
+    return AdvRoom(name, short_desc, long_desc, passages)  # Return the completed object
