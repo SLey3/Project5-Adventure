@@ -17,15 +17,12 @@ necessary to play a game.
 
 from AdvRoom import read_adventure, AdvRoom
 from fpfinder import get_file_fp
-from tokenscanner import TokenScanner
 from AdvObject import read_object, AdvObject
 from typing import Type, Dict
 import sys
 
-TokenScanner()
-
-
 OBJECT_PREFIX = "CrowtherO"
+SYNOMYNS_PREFIX = "CrowtherS"
 
 class AdvGame:
 
@@ -33,28 +30,59 @@ class AdvGame:
 
     inventory = set()
 
-    token_scanner = TokenScanner()
+    synomyns = { }
 
     def __init__(self, rooms: Dict[str, Type[AdvRoom]], objects: Dict[str, Type[AdvObject]]):
         self._rooms = rooms
         self._objects = objects
+        self._read_synomyns()
+
+    def _read_synomyns(self):
+        fp = get_file_fp(SYNOMYNS_PREFIX)
+
+        marker = "="
+
+        with open(fp) as f:
+            for line in f.readlines():
+                split_line = line.split(marker)
+                self.synomyns[split_line[0]] = split_line[1].strip("\n") # synomyns will act as the identifiers when the dictionary is called later in command parsing
+
+
+    def _print_objects_in_room_or_not(self, room):
+        room_objects = room.get_contents()
+        if room_objects: # check if the set is not empty
+            for obj in room_objects:
+                desc = self._objects[obj].get_description()
+                print(f"There is {desc} here.\n")
 
     def get_rooms(self, name):
         """Returns the AdvRoom object with the specified name."""
         return self._rooms[name]
 
     def add_objects_to_room(self):
-        for _, room in self._rooms.items():
+        for room in self._rooms.values():
             for obj_name, obj in self._objects.items():
                 obj_loc = obj.get_initial_location()
 
                 if obj_loc == "PLAYER":
                     self.inventory.add(obj_name)
+                else:
+                    room_name = room.get_name()
 
-                room_name = room.get_name()
+                    if obj_loc == room_name:
+                        room.add_object(obj_name)
 
-                if obj_loc == room_name:
-                    room.add_object(obj_name)
+
+    def split_index_value_or_false(self, i, split_list):
+        """
+        gets the value of a given index from the given list created by `str.split()`
+        if IndexError is raised: return False
+        """
+        try:
+            value = split_list[i]
+        except IndexError:
+            return False
+        return value
 
 
     def run(self):
@@ -70,15 +98,22 @@ class AdvGame:
                 line = room.get_text()
                 print(f"{line}\n")
 
-                room_objects = room.get_contents()
-                if room_objects: # check if the set is not empty
-                    for obj in room_objects:
-                        desc = self._objects[obj].get_description()
-                        print(f"There is {desc} here.\n")
+                self._print_objects_in_room_or_not(room)
             else:
                 self.disable_txt = False
 
             response = input("> ").strip().upper()
+
+            split_response = response.split(" ", 1)
+
+            if split_response[0] in self.synomyns:
+                arg = self.split_index_value_or_false(1, split_response)
+
+                response = self.synomyns[split_response[0]]
+
+                if arg:
+                    response = f"{response} {arg}"
+
             rooms = room.get_passages()
 
             forced = rooms.get("FORCED", None)
@@ -92,25 +127,59 @@ class AdvGame:
                 if not next_rooms:
                     if response == "HELP":
                         print("\n".join(HELP_TEXT))
-                        self.disable_txt = True
+
                     elif response == "QUIT":
                         sys.exit(0)
                     elif response == "LOOK":
-                        print(room.get_long_description())
-                        self.disable_txt = True
+                        print(f"{room.get_long_description()}\n")
+                        self._print_objects_in_room_or_not(room)
+
                     elif response == "INVENTORY":
                         if self.inventory:
                             print("You are carrying:")
                             for item in self.inventory:
                                 print(f"\n {self._objects[item].get_description()}")
                         else:
-                            print("You are empty-handed.")
-                        self.disable_txt = True
+                            print("You are empty-handed.\n")
+
+                    # using split as below are to check for TAKE and DROP commands    
+                    elif response.split(" ", 1)[0] == "TAKE":
+                        arg = response.split(" ", 1)[1]
+
+                        # validate that the arg is an actual object
+                        is_object = self._objects.get(arg, False)
+
+                        if is_object:
+                            # validate if object is in the current room
+                            in_room = room.contains_object(arg)
+                            if in_room:
+                                self.inventory.add(arg)
+                                room.remove_object(arg) # removes object from the room as it goes into the users inventory
+                                print("Taken.\n")
+                            else:
+                                print(f"No item by the name: {arg.lower()} present.\n")
+                        else:
+                            print(f"No item by the name: {arg.lower()} exists.\n")
+                    elif response.split(" ", 1)[0] == "DROP":
+                        arg = response.split(" ", 1)[1]
+
+                        # checks if the arg is in the users inventory
+                        in_inventory = arg in self.inventory
+
+                        if in_inventory:
+                            self.inventory.remove(arg)
+                            room.add_object(arg) # add object from user's inventory to the current room
+                            print("Dropped.\n")
+                        else:
+                            print(f"You are not carrying {arg.lower()}.\n")
+
                     else:
-                        print("I don't understand that response. Perhaps my english isn't that good...")
-                else:
+                        print("I don't understand that response. Perhaps my english isn't that good...\n")
+                    self.disable_txt = True
                     room.set_visited()
+                else:
                     current = next_rooms
+                    room.set_visited()
             else:
                 current = forced
 

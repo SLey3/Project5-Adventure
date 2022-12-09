@@ -41,7 +41,7 @@ def read_object(f) -> AdvObject:
         return None
 
     finished = False
-    text = [] # Below, when text file is parsed, the text list when __getitem__  is called thru the indexes of 0, 1, 
+    text = [] # Below, when text file is parsed, the text list when __getitem__  is called thru the indexes of: 0, 1, 
               # the results should be as follows:
               # text[0] = description
               # text[1] = location
