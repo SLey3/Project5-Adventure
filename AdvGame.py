@@ -18,7 +18,7 @@ necessary to play a game.
 from AdvRoom import read_adventure, AdvRoom
 from fpfinder import get_file_fp
 from AdvObject import read_object, AdvObject
-from typing import Type, Dict
+from typing import Type, Dict, List, Tuple
 import sys
 
 OBJECT_PREFIX = "CrowtherO"
@@ -84,6 +84,20 @@ class AdvGame:
             return False
         return value
 
+    def find_room_in_list(self, direction: str, rooms: List[Tuple[str, str , str]]):
+        """
+        finds the room in the rooms list based on direction and either returns the room name or None 
+        if the room could not be found
+        """
+        for room in rooms:
+            if direction == room[0]: # if direction == room direction
+                if room[2]: # if room has a key requirement
+                    if room[2] in self.inventory: # if room key is in the users inventory then return the room name
+                        return room[1]
+                else:
+                     return room[1]
+        return None # else return None
+
 
     def run(self):
         """Plays the adventure game stored in this object."""
@@ -116,14 +130,14 @@ class AdvGame:
 
             rooms = room.get_passages()
 
-            forced = rooms.get("FORCED", None)
+            forced = self.find_room_in_list("FORCED", rooms)
 
             # "if not var" is another way to state "if var is None"
             if not forced:
-                next_rooms = rooms.get(response, None)
+                next_rooms = self.find_room_in_list(response, rooms)
 
                 if not next_rooms:
-                    next_rooms = rooms.get("*", None)
+                    next_rooms = self.find_room_in_list("*", rooms)
                 if not next_rooms:
                     if response == "HELP":
                         print("\n".join(HELP_TEXT))
@@ -211,7 +225,7 @@ def read_game(f):
                 objects[name] = object
 
     return AdvGame(rooms, objects)
-
+ 
 # Constants
 
 HELP_TEXT = [

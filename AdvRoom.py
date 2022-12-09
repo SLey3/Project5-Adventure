@@ -57,7 +57,7 @@ class AdvRoom:
         return self.get_long_description()
 
     def get_passages(self):
-        """Returns the dictionary mapping directions to names."""
+        """Returns the list containing a tuple with the follow order items: direction, name, key required."""
         return self._passages.copy()
 
     def set_visited(self):
@@ -138,8 +138,11 @@ def read_adventure(f):
         else:
             text.append(line)
 
-    passages= { }                            # Read the answer dictionary
+    passages = []                           # Read the answer dictionary
     finished = False
+    key_required = None
+    passage = None
+
     while not finished:
         line = f.readline().rstrip()
         if line == "":
@@ -150,7 +153,14 @@ def read_adventure(f):
                 raise ValueError("Missing colon in " + line)
             response = line[:colon].strip().upper()
             next_room = line[colon + 1:].strip()
-            passages[response] = next_room
+           
+            if "/" in next_room:
+                next_room = next_room.split("/")
+                passage = next_room[0]
+                key_required = next_room[1]
+                passages.append((response, passage, key_required))
+            else:
+                passages.append((response, next_room, key_required))
 
     short_desc, long_desc = _parse_text(text)
 
