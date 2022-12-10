@@ -10,8 +10,6 @@
 # Milestone #1.  You will need to add other public methods for later    #
 # milestones, as described in the handout.                              #
 #########################################################################
-from typing import Union, List
-from textwrap import fill
 
 # Constants
 
