@@ -192,6 +192,7 @@ class AdvGame:
 
                     else:
                         print("I don't understand that response. Perhaps my english isn't that good...\n")
+                    self.disable_txt = True
                     room.set_visited()
                 else:
                     self.prev_room = current
