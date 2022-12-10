@@ -28,6 +28,8 @@ class AdvGame:
 
     disable_txt = False
 
+    prev_room = None
+
     inventory = set()
 
     synomyns = { }
@@ -107,6 +109,7 @@ class AdvGame:
 
         while current != "EXIT":
             room = self._rooms[current]
+            rooms = room.get_passages()
             
             if not self.disable_txt:
                 line = room.get_text()
@@ -116,24 +119,23 @@ class AdvGame:
             else:
                 self.disable_txt = False
 
-            response = input("> ").strip().upper()
-
-            split_response = response.split(" ", 1)
-
-            if split_response[0] in self.synomyns:
-                arg = self.split_index_value_or_false(1, split_response)
-
-                response = self.synomyns[split_response[0]]
-
-                if arg:
-                    response = f"{response} {arg}"
-
-            rooms = room.get_passages()
-
             forced = self.find_room_in_list("FORCED", rooms)
 
             # "if not var" is another way to state "if var is None"
             if not forced:
+
+                response = input("> ").strip().upper()
+
+                split_response = response.split(" ", 1)
+
+                if split_response[0] in self.synomyns:
+                    arg = self.split_index_value_or_false(1, split_response)
+
+                    response = self.synomyns[split_response[0]]
+
+                    if arg:
+                        response = f"{response} {arg}"
+
                 next_rooms = self.find_room_in_list(response, rooms)
 
                 if not next_rooms:
@@ -153,6 +155,7 @@ class AdvGame:
                             print("You are carrying:")
                             for item in self.inventory:
                                 print(f"\n {self._objects[item].get_description()}")
+                            print("\n")
                         else:
                             print("You are empty-handed.\n")
 
@@ -189,12 +192,13 @@ class AdvGame:
 
                     else:
                         print("I don't understand that response. Perhaps my english isn't that good...\n")
-                    self.disable_txt = True
                     room.set_visited()
                 else:
+                    self.prev_room = current
                     current = next_rooms
                     room.set_visited()
             else:
+                self._rooms[self.prev_room].unvisit()
                 current = forced
 
 

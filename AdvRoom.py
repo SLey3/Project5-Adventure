@@ -21,6 +21,8 @@ class AdvRoom:
 
     visited = False
 
+    forced = False
+
     def __init__(self, name, shortdesc, longdesc, passages):
         """Creates a new room with the specified attributes."""
         self._name = name
@@ -52,7 +54,7 @@ class AdvRoom:
         """
         Gets the text describing the room depending on visited status
         """
-        if self.has_been_visited:
+        if self.has_been_visited and not self.forced:
             return self.get_short_description()
         return self.get_long_description()
 
@@ -65,6 +67,12 @@ class AdvRoom:
         Sets the rooms visitation status
         """
         self.visited = True
+    
+    def unvisit(self):
+        """
+        Sets the room visitation status to False
+        """
+        self.visited = False
 
     def add_object(self, obj_name):
         """
@@ -92,33 +100,6 @@ class AdvRoom:
         copy objects set
         """
         return self._objects.copy()
-    
-
-def _parse_text(txt_obj: List[str]) -> Union[str, str]:
-    """
-    Seperates text into short and long descriptions
-    """
-    short_desc = txt_obj.pop(0) # Short description is always first in the list
-
-    long_desc = ""
-
-    for txt in txt_obj:
-        if "." in txt:
-            txt = txt.replace(".", ".\n")
-
-            # if the end of the index item is not the end of a sentence, a space must be added in order to prevent words unecessarly combining
-            if txt[-1] != ".\n":
-                txt_split = txt.rsplit(txt[-1], 1) # isolate the last character in the string from the rest of the string
-                txt_split[1] = txt_split[1].replace("", f"{txt[-1]} ") # adds the last character with space
-                txt = "".join(txt_split) # reform string
-           
-        else:
-            txt = txt.replace(txt[-1], f"{txt[-1]} ")
-        long_desc += txt
-    
-    long_desc = fill(long_desc) # make line indents even
-    
-    return short_desc, long_desc
 
 
 # Method to read a room from a file
@@ -161,7 +142,9 @@ def read_adventure(f):
                 passages.append((response, passage, key_required))
             else:
                 passages.append((response, next_room, key_required))
+            key_required = None
 
-    short_desc, long_desc = _parse_text(text)
+    short_desc = text.pop(0)
+    long_desc = "\n".join(text)
 
     return AdvRoom(name, short_desc, long_desc, passages)  # Return the completed object
